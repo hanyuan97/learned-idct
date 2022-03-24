@@ -6,15 +6,14 @@ import torch.nn as nn
 import numpy as np
 from torch.utils.data import DataLoader, random_split
 from dataset import DCTDataset
-from model import LIDCT, FCIDCT, FCCNNIDCT, DECNNIDCT
+from model import LIDCT, FCIDCT, FCCNNIDCT, DECNNIDCT, RESIDCT
 from tqdm import tqdm 
 
-train_on_gpu = torch.cuda.is_available()
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 def init(args):
-    EPOCH, model_type, dataset, dct_size, train_batch, val_batch, train_ratio, works = args.epoch, args.model_type, args.dataset, args.dct_size, args.batch, args.val_batch, args.train_ratio, args.works
-    dctDataset = DCTDataset(filename=dataset)
+    EPOCH, model_type, dataset, dct_size, train_batch, val_batch, train_ratio, works, ndims = args.epoch, args.model_type, args.dataset, args.dct_size, args.batch, args.val_batch, args.train_ratio, args.works, args.ndims
+    dctDataset = DCTDataset(filename=dataset, ndims=ndims)
     train_num = int(len(dctDataset) * args.train_ratio)
     val_num = len(dctDataset) - train_num
     
@@ -32,14 +31,16 @@ def init(args):
                             pin_memory=True)
 
     
-    if model_type == "LIDCT":
+    if model_type == "cnn":
         model = LIDCT()
-    elif model_type == "FCIDCT":
+    elif model_type == "fc":
         model = FCIDCT()
-    elif model_type == "FCCNNIDCT":
+    elif model_type == "fc_cnn":
         model = FCCNNIDCT()
-    elif model_type == "DECNNIDCT":
+    elif model_type == "decnn":
         model = DECNNIDCT()
+    elif model_type == "res":
+        model = RESIDCT()
     
     
     if not os.path.exists("./loss_log"):
@@ -70,7 +71,7 @@ def train_one_epoch(epoch_index):
     running_loss = 0.
     last_loss = 0.
     for data, label in tqdm(training_loader):
-        data, label = data.to(device), label.to(device)
+        data, label = data.to(device, dtype=torch.float), label.to(device, dtype=torch.float)
         optimizer.zero_grad()
         output = model(data)
         loss = loss_fn(output*255, label*255)
@@ -91,6 +92,7 @@ def val_one_epoch(epoch_index):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--epoch", type=int, default=20)
+    parser.add_argument("-m", "--model_type", type=str, default="cnn")
     parser.add_argument("-d", "--dataset", type=str, default="dataset")
     parser.add_argument("-b", "--batch", type=int, default=64)
     parser.add_argument("-vb", "--val_batch", type=int, default=32)

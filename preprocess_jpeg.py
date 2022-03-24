@@ -18,7 +18,7 @@ def preprocess(image_paths, size=8, gray=False, max=100) -> None:
             y = random.randint(0, int(img.shape[0]-size-1))
             mcu = img[y:y+size, x:x+size]
             patches.append(jpeg.encode_mcu(mcu))
-            labels.append(mcu)
+            labels.append(mcu/255)
     return patches, labels
 
 def save_file(x, y, output_path, filename, size, max):

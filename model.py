@@ -1,5 +1,7 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from utils.gdn import GDN
 
 class LDCT(nn.Module):
     def __init__(self, num_channels=1) -> None:
@@ -118,3 +120,50 @@ class DECNNIDCT(nn.Module):
         x = self.relu(self.conv3(x))
         # x = self.relu(self.fc4(x))
         return x
+
+class RESIDCT(nn.Module):
+    def __init__(self, num_channels=64, size=8) -> None:
+        super(RESIDCT, self).__init__()
+        self.block1 = nn.Sequential(
+            nn.ConvTranspose2d(num_channels, 64, kernel_size=8, padding=0),
+            nn.PReLU()
+        )
+        self.block2 = ResidualBlock(64)
+        self.block3 = ResidualBlock(64)
+        self.block4 = ResidualBlock(64)
+        self.block5 = ResidualBlock(64)
+        self.block6 = ResidualBlock(64)
+        self.block7 = nn.Sequential(
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            GDN(64)
+        )
+        self.block8 = nn.Conv2d(64, 1, kernel_size=3, padding=3//2)
+    def forward(self, x):
+        block1 = self.block1(x)
+        block2 = self.block2(block1)
+        block3 = self.block3(block2)
+        block4 = self.block4(block3)
+        block5 = self.block5(block4)
+        block6 = self.block6(block5)
+        block7 = self.block7(block6)
+        block8 = self.block8(block7 + block1)
+        return (torch.tanh(block8) + 1) / 2
+        
+
+class ResidualBlock(nn.Module):
+    def __init__(self, channels):
+        super(ResidualBlock, self).__init__()
+        self.conv1 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
+        self.gdn1 = GDN(channels)
+        self.prelu = nn.PReLU()
+        self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
+        self.gdn2 = GDN(channels)
+
+    def forward(self, x):
+        residual = self.conv1(x)
+        residual = self.gdn1(residual)
+        residual = self.prelu(residual)
+        residual = self.conv2(residual)
+        residual = self.gdn2(residual)
+
+        return x + residual
