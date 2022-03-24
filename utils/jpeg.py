@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-class jpeg:
+class JPEG:
     def __init__(self, qf=1) -> None:
         self.Q_F = qf
         self.Qy = np.array([ [16, 11, 10, 16, 24 , 40 , 51 , 61 ],
@@ -40,14 +40,14 @@ class jpeg:
         return idct
     
     def dct(self, mcu):
-        return np.int32(cv2.dct(mcu-128))
+        return np.round(cv2.dct(mcu-128))
 
     def idct(self, iquan):
-        return np.int32(cv2.idct(np.float32(iquan))) + 128
+        return np.round(cv2.idct(iquan)) + 128
     
     def quanti(self, dct):
-        return np.int32(dct / (self.Qy * self.Q_F))
+        return np.round(dct / (self.Qy * self.Q_F))
     
     def iquanti(self, quan):
-        return np.int32(quan * (self.Qy * self.Q_F))
+        return np.round(quan * (self.Qy * self.Q_F))
     
