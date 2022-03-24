@@ -83,7 +83,7 @@ def train_one_epoch(epoch_index):
 def val_one_epoch(epoch_index):
     running_loss = 0.
     for data, label in tqdm(validation_loader):
-        data, label = data.to(device), label.to(device)
+        data, label = data.to(device, dtype=torch.float), label.to(device, dtype=torch.float)
         output = model(data)
         loss = loss_fn(output*255, label*255)
         running_loss += loss.item()
