@@ -1,6 +1,6 @@
 __pycache__
 *.png
 *.pickle
-*.pt
+*.pth
 loss_log/*
 output/*
