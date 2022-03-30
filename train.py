@@ -46,6 +46,9 @@ def init(args):
     if not os.path.exists("./loss_log"):
         os.mkdir("./loss_log")
     
+    if not os.path.exists("./weights"):
+        os.mkdir("./weights")
+    
     log_file = open(f"./loss_log/{model_type}_{args.dataset}.log", "w")
     model.to(device)
     loss_fn = nn.MSELoss()
@@ -109,7 +112,8 @@ if __name__ == "__main__":
     train(args.epoch, model, loss_fn, optimizer, training_loader, validation_loader, log_file)
     
     if args.save:
-        torch.save(model.state_dict(), args.output_filename)
+        torch.save(model.state_dict(), f"./weights/{args.output_filename}")
+        print(f"model save to: ./weights/{args.output_filename}")
     # for data, label in tqdm(validation_loader):
     #     data, label = data.to(device), label.to(device)
     #     output = model(data)
