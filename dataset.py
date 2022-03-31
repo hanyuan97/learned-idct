@@ -20,10 +20,11 @@ class DCTDataset(Dataset):
         if self.ndims == 64:
             if self.q == -1:
                 self.jpeg.setQF(random.randint(1, 10))
-                x = self.jpeg.quanti(self.data["x"][index])
+                x = self.jpeg.quanti(self.data["x"][index]).reshape(64, 1, 1)
             elif self.q > 0:
-                x = self.jpeg.quanti(self.data["x"][index])
-            x = self.data["x"][index].reshape(64, 1, 1)
+                x = self.jpeg.quanti(self.data["x"][index]).reshape(64, 1, 1)
+            else:
+                x = self.data["x"][index].reshape(64, 1, 1)
             return x, self.data["y"][index]
         
         return self.data["x"][index], self.data["y"][index]
