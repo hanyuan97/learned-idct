@@ -12,8 +12,8 @@ from tqdm import tqdm
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 def init(args):
-    EPOCH, model_type, dataset, dct_size, train_batch, val_batch, train_ratio, works, ndims = args.epoch, args.model_type, args.dataset, args.dct_size, args.batch, args.val_batch, args.train_ratio, args.works, args.ndims
-    dctDataset = DCTDataset(filename=dataset, ndims=ndims)
+    EPOCH, model_type, dataset, dct_size, train_batch, val_batch, train_ratio, works, ndims, qf = args.epoch, args.model_type, args.dataset, args.dct_size, args.batch, args.val_batch, args.train_ratio, args.works, args.ndims, args.qf
+    dctDataset = DCTDataset(filename=dataset, ndims=ndims, q=qf)
     train_num = int(len(dctDataset) * args.train_ratio)
     val_num = len(dctDataset) - train_num
     
@@ -49,7 +49,12 @@ def init(args):
     if not os.path.exists("./weights"):
         os.mkdir("./weights")
     
-    log_file = open(f"./loss_log/{model_type}_{args.dataset}.log", "w")
+    if qf == 0:
+        log_file = open(f"./loss_log/{model_type}_{args.dataset}.log", "w")
+    elif qf > 0:
+        log_file = open(f"./loss_log/{model_type}_{args.dataset}_{qf}.log", "w")
+    elif qf == -1:
+        log_file = open(f"./loss_log/{model_type}_{args.dataset}_random_q.log", "w")
     model.to(device)
     loss_fn = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.00001)
@@ -105,6 +110,7 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--save", action="store_true")
     parser.add_argument("-n", "--ndims", type=int, default=1)
     parser.add_argument("-w", "--works", type=int, default=1)
+    parser.add_argument("-q", "--qf", type=int, default=0)
     args = parser.parse_args()
     
     model, loss_fn, optimizer, training_loader, validation_loader, log_file = init(args)

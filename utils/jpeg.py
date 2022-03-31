@@ -51,3 +51,5 @@ class JPEG:
     def iquanti(self, quan):
         return np.round(quan * (self.Qy * self.Q_F))
     
+    def setQF(self, qf):
+        self.Q_F = qf
