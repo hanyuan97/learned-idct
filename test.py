@@ -20,6 +20,7 @@ def psnr(img1, img2):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-q", "--qf", type=int, default=1)
+    parser.add_argument("-l", "--lr", action="store_true")
     args = parser.parse_args()
     
     model_type = "res"
@@ -64,7 +65,10 @@ if __name__ == "__main__":
 
     data_path = "../dataset/DIV2K_valid_HR"
     # test_images = ["0848_4x_lr.png", "0850_4x_lr.png", "0869_4x_lr.png", "0900_4x_lr.png"]
-    test_images = [i for i in os.listdir(data_path) if i.endswith("lr.png")]
+    if args.lr:
+        test_images = [i for i in os.listdir(data_path) if i.endswith("lr.png")]
+    else:
+        test_images = os.listdir(data_path)
     a_jpg_mse = 0
     a_jpg_psnr = 0
     a_res_mse = 0
