@@ -24,7 +24,7 @@ if __name__ == "__main__":
     
     model_type = "res"
     qf = args.qf
-    modelname = f"jpeg_model_{qf}"
+    
     jpeg = JPEG(qf)
     size = 8
     q_str = ""
@@ -32,6 +32,7 @@ if __name__ == "__main__":
         q_str = str(qf)
     elif qf == -1:
         q_str = "random"
+    modelname = f"jpeg_model_{q_str}"
     save_path = f"./jpeg_result/{q_str}"
     if not os.path.exists(save_path):
         os.mkdir(save_path)
@@ -63,7 +64,7 @@ if __name__ == "__main__":
 
     data_path = "../dataset/DIV2K_valid_HR"
     # test_images = ["0848_4x_lr.png", "0850_4x_lr.png", "0869_4x_lr.png", "0900_4x_lr.png"]
-    test_images = [i for i in os.listdir(data_path) if i.endswith("lr.png")]
+    test_images = [i for i in os.listdir(data_path)]
     a_jpg_mse = 0
     a_jpg_psnr = 0
     a_res_mse = 0
@@ -115,7 +116,7 @@ if __name__ == "__main__":
     a_jpg_psnr /= l
     a_res_mse /= l
     a_res_psnr /= l
-    log_file.write(f"----------------------------------")
+    log_file.write(f"----------------------------------\n")
     log_file.write(f"{a_jpg_mse},")
     log_file.write(f"{a_res_mse},")
     log_file.write(f"{a_jpg_psnr},")

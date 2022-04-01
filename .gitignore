@@ -5,5 +5,5 @@ __pycache__
 loss_log/*
 output/*
 *.ppk
-train.sh
+*.sh
 *.log
