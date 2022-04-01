@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     data_path = "../dataset/DIV2K_valid_HR"
     # test_images = ["0848_4x_lr.png", "0850_4x_lr.png", "0869_4x_lr.png", "0900_4x_lr.png"]
-    test_images = [i for i in os.listdir(data_path)]
+    test_images = [i for i in os.listdir(data_path) if i.endswith("lr.png")]
     a_jpg_mse = 0
     a_jpg_psnr = 0
     a_res_mse = 0
