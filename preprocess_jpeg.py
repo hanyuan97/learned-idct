@@ -11,8 +11,11 @@ jpeg = JPEG(qf=1)
 def preprocess(image_paths, size=8, gray=False, max=100, dct=False) -> None: 
     patches = []
     labels = []
-    for path in image_paths:    
-        img = np.float32(cv2.imread(path, cv2.IMREAD_GRAYSCALE))
+    for path in image_paths:
+        if gray:
+            img = np.float32(cv2.imread(path, cv2.IMREAD_GRAYSCALE))
+        else:
+            img = np.float32(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2YCR_CB))
         for i in range(max):
             x = random.randint(0, int(img.shape[1]-size-1))
             y = random.randint(0, int(img.shape[0]-size-1))
