@@ -172,8 +172,8 @@ class RESJPEGDECODER(nn.Module):
         )
         self.block8 = nn.Conv2d(192, 3, kernel_size=3, padding=3//2)
     def forward(self, x):
-        block1 = self.block1(x[:64])
-        crcb = self.crcbblock(x[64:])
+        block1 = self.block1(x[:,:64])
+        crcb = self.crcbblock(x[:,64:])
         cat1 = torch.cat((block1, crcb))
         block2 = self.block2(cat1)
         block3 = self.block3(block2)
