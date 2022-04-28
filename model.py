@@ -148,7 +148,41 @@ class RESIDCT(nn.Module):
         block7 = self.block7(block6)
         block8 = self.block8(block7 + block1)
         return (torch.tanh(block8) + 1) / 2
-        
+
+
+class RESJPEGDECODER(nn.Module):
+    def __init__(self, num_channels=64, size=8) -> None:
+        super(RESJPEGDECODER, self).__init__()
+        self.crcbblock = nn.Sequential(
+            nn.ConvTranspose2d(32, 128, kernel_size=8, padding=0),
+            nn.PReLU()
+        )
+        self.block1 = nn.Sequential(
+            nn.ConvTranspose2d(num_channels, 64, kernel_size=8, padding=0),
+            nn.PReLU()
+        )
+        self.block2 = ResidualBlock(192)
+        self.block3 = ResidualBlock(192)
+        self.block4 = ResidualBlock(192)
+        self.block5 = ResidualBlock(192)
+        self.block6 = ResidualBlock(192)
+        self.block7 = nn.Sequential(
+            nn.Conv2d(192, 192, kernel_size=3, padding=1),
+            GDN(192)
+        )
+        self.block8 = nn.Conv2d(192, 3, kernel_size=3, padding=3//2)
+    def forward(self, x):
+        block1 = self.block1(x[:64])
+        crcb = self.crcbblock(x[64:])
+        cat1 = torch.cat((block1, crcb))
+        block2 = self.block2(cat1)
+        block3 = self.block3(block2)
+        block4 = self.block4(block3)
+        block5 = self.block5(block4)
+        block6 = self.block6(block5)
+        block7 = self.block7(block6)
+        block8 = self.block8(block7 + block1)
+        return (torch.tanh(block8) + 1) / 2 
 
 class ResidualBlock(nn.Module):
     def __init__(self, channels):

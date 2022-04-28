@@ -9,6 +9,8 @@ import random
 jpeg = JPEG(qf=1)
 
 def preprocess(image_paths, size=8, gray=False, max=100, dct=False) -> None: 
+    jpeg.setColor(not gray)
+    C = 1 if gray else 3
     patches = []
     labels = []
     for path in image_paths:
@@ -24,12 +26,12 @@ def preprocess(image_paths, size=8, gray=False, max=100, dct=False) -> None:
                 patches.append(jpeg.dct(mcu))
             else:
                 patches.append(jpeg.encode_mcu(mcu))
-            labels.append((mcu/255).reshape(1, size, size))
+            labels.append((mcu/255).transpose(2, 0, 1))
     return patches, labels
 
-def save_file(x, y, output_path, filename, size, max):
+def save_file(x, y, output_path, filename, size, max, gray):
     obj = {'x': x, 'y': y}
-    with open(output_path+f"/{filename}_{max}_{size}_dct.pickle", "wb") as file:
+    with open(output_path+f"/{filename}_{max}_{size}{'' if gray else '_color'}.pickle", "wb") as file:
         pickle.dump(obj, file)
 
 def load_file(path, filename):
@@ -51,4 +53,4 @@ if __name__ == "__main__":
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
     x, y = preprocess(image_paths, args.size, args.gray, args.max, args.dct)
-    save_file(x, y, args.output_dir, args.filename, args.size, len(x))
+    save_file(x, y, args.output_dir, args.filename, args.size, len(x), args.gray)

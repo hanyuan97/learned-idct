@@ -1,3 +1,4 @@
+from configparser import Interpolation
 import os
 import numpy as np
 import PIL
@@ -5,7 +6,7 @@ import torch
 from torch.utils.data import Dataset
 from utils.jpeg import JPEG
 import random
-
+import cv2
 from preprocess import load_file
 
 class DCTDataset(Dataset):
@@ -23,6 +24,24 @@ class DCTDataset(Dataset):
                 x = self.jpeg.quanti(self.data["x"][index]).reshape(64, 1, 1)
             elif self.q > 0:
                 x = self.jpeg.quanti(self.data["x"][index]).reshape(64, 1, 1)
+            else:
+                x = self.data["x"][index].reshape(64, 1, 1)
+            return x, self.data["y"][index]
+        
+        if self.ndims == 3:
+            if self.q == -1:
+                self.jpeg.setQF(random.randint(1, 10))
+                x = self.jpeg.quanti(self.data["x"][index]).transposed(2, 0, 1) # CHW np
+                x0 = x[0].reshape(64, 1, 1)
+                x1 = cv2.resize(x[1], (4, 4), Interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                x2 = cv2.resize(x[2], (4, 4), Interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                x = np.concatenate((x0, x1, x2))
+            elif self.q > 0:
+                x = self.jpeg.quanti(self.data["x"][index]).transposed(2, 0, 1) # CHW np
+                x0 = x[0].reshape(64, 1, 1)
+                x1 = cv2.resize(x[1], (4, 4), Interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                x2 = cv2.resize(x[2], (4, 4), Interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                x = np.concatenate((x0, x1, x2))
             else:
                 x = self.data["x"][index].reshape(64, 1, 1)
             return x, self.data["y"][index]

@@ -6,7 +6,7 @@ import torch.nn as nn
 import numpy as np
 from torch.utils.data import DataLoader, random_split
 from dataset import DCTDataset
-from model import LIDCT, FCIDCT, FCCNNIDCT, DECNNIDCT, RESIDCT
+from model import LIDCT, FCIDCT, FCCNNIDCT, DECNNIDCT, RESIDCT, RESJPEGDECODER
 from tqdm import tqdm 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -41,6 +41,8 @@ def init(args):
         model = DECNNIDCT()
     elif model_type == "res":
         model = RESIDCT()
+    elif model_type == "res_dec":
+        model = RESJPEGDECODER()
     
     
     if not os.path.exists("./loss_log"):
