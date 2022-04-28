@@ -174,7 +174,7 @@ class RESJPEGDECODER(nn.Module):
     def forward(self, x):
         block1 = self.block1(x[:,:64])
         crcb = self.crcbblock(x[:,64:])
-        cat1 = torch.cat((block1, crcb))
+        cat1 = torch.cat((block1, crcb), 1)
         block2 = self.block2(cat1)
         block3 = self.block3(block2)
         block4 = self.block4(block3)
