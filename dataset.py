@@ -15,7 +15,7 @@ class DCTDataset(Dataset):
         self.data = load_file("data", filename)
         self.ndims = ndims
         self.q = q
-        self.jpeg = JPEG(q)
+        self.jpeg = JPEG(q, ndims==3)
     
     def __getitem__(self, index):
         if self.ndims == 64:
