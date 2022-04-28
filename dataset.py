@@ -33,14 +33,14 @@ class DCTDataset(Dataset):
                 self.jpeg.setQF(random.randint(1, 10))
                 x = self.jpeg.quanti(self.data["x"][index]).transpose(2, 0, 1) # CHW np
                 x0 = x[0].reshape(64, 1, 1)
-                x1 = cv2.resize(x[1], (4, 4), Interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
-                x2 = cv2.resize(x[2], (4, 4), Interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                x1 = cv2.resize(x[1], (4, 4), interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                x2 = cv2.resize(x[2], (4, 4), interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
                 x = np.concatenate((x0, x1, x2))
             elif self.q > 0:
                 x = self.jpeg.quanti(self.data["x"][index]).transpose(2, 0, 1) # CHW np
                 x0 = x[0].reshape(64, 1, 1)
-                x1 = cv2.resize(x[1], (4, 4), Interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
-                x2 = cv2.resize(x[2], (4, 4), Interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                x1 = cv2.resize(x[1], (4, 4), interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                x2 = cv2.resize(x[2], (4, 4), interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
                 x = np.concatenate((x0, x1, x2))
             else:
                 x = self.data["x"][index].reshape(64, 1, 1)
