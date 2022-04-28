@@ -181,7 +181,7 @@ class RESJPEGDECODER(nn.Module):
         block5 = self.block5(block4)
         block6 = self.block6(block5)
         block7 = self.block7(block6)
-        block8 = self.block8(block7 + block1)
+        block8 = self.block8(block7 + cat1)
         return (torch.tanh(block8) + 1) / 2 
 
 class ResidualBlock(nn.Module):
