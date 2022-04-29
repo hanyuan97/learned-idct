@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--gray", action="store_true")
     args = parser.parse_args()
     
-    model_type = "res"
+    model_type = "res_dec"
     qf = args.qf
     
     jpeg = JPEG(qf, not args.gray)
@@ -151,8 +151,8 @@ if __name__ == "__main__":
         log_file.write(f"{jpg_psnr},")
         log_file.write(f"{res_psnr}\n")
         
-        cv2.imwrite(f"{save_path}/{name}_jpeg_recon.png", jpeg_recon)
-        cv2.imwrite(f"{save_path}/{name}_res_recon.png", res_recon)
+        cv2.imwrite(f"{save_path}/{name}_jpeg_recon.png", cv2.cvtColor(jpeg_recon.astype('uint8'), cv2.COLOR_YCR_CB2RGB))
+        cv2.imwrite(f"{save_path}/{name}_res_recon.png", cv2.cvtColor(res_recon.astype('uint8'), cv2.COLOR_YCR_CB2RGB))
 
     l = len(test_images)
     a_jpg_mse /= l
