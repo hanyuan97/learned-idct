@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from model import LIDCT, FCIDCT, FCCNNIDCT, DECNNIDCT, RESIDCT
+from model import LIDCT, FCIDCT, FCCNNIDCT, DECNNIDCT, RESIDCT, RESJPEGDECODER
 import matplotlib.pyplot as plt
 import cv2
 from utils.jpeg import JPEG
@@ -21,20 +21,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-q", "--qf", type=int, default=1)
     parser.add_argument("-l", "--lr", action="store_true")
+    parser.add_argument("-g", "--gray", action="store_true")
     args = parser.parse_args()
     
     model_type = "res"
     qf = args.qf
     
-    jpeg = JPEG(qf)
+    jpeg = JPEG(qf, not args.gray)
     size = 8
     q_str = ""
     if qf > 0:
         q_str = str(qf)
     elif qf == -1:
         q_str = "random"
-    modelname = f"jpeg_model_{q_str}"
-    save_path = f"./jpeg_result/{q_str}"
+    modelname = f"jpeg_model_color_{q_str}"
+    save_path = f"./jpeg_result/color_{q_str}"
     if not os.path.exists(save_path):
         os.mkdir(save_path)
     log_file = open(f"{save_path}/detail.log", "w")
@@ -56,6 +57,8 @@ if __name__ == "__main__":
         model = DECNNIDCT(num_channels=64, size=size)
     elif model_type == "res":
         model = RESIDCT(num_channels=64, size=size)
+    elif model_type == "res_dec":
+        model = RESJPEGDECODER()
 
     model.to(device)
     model.load_state_dict(torch.load(f"./weights/{modelname}.pth"))
@@ -74,28 +77,64 @@ if __name__ == "__main__":
     a_res_mse = 0
     a_res_psnr = 0
     for name in test_images:
-        img = np.float32(cv2.imread(f"{data_path}/{name}", cv2.IMREAD_GRAYSCALE))
-        img = img[:img.shape[0]//8*8, :img.shape[1]//8*8]
-        w = img.shape[1]
-        h = img.shape[0]
-        jpeg_recon = np.zeros((h, w))
-        res_recon = np.zeros((h, w))
-        quan_recon = []
-        for y in range(0, h - size + 1, size):
-            for x in range(0, w - size + 1, size):
-                mcu = img[y:y+size,x:x+size]
-                quan = jpeg.encode_mcu(mcu)
-                quan_recon.append(quan)
-                decoded_mcu = jpeg.decode_mcu(quan)
-                jpeg_recon[y:y+size,x:x+size] = decoded_mcu
+        if args.gray:
+            img = np.float32(cv2.imread(f"{data_path}/{name}", cv2.IMREAD_GRAYSCALE))
+            img = img[:img.shape[0]//8*8, :img.shape[1]//8*8]
+            w = img.shape[1]
+            h = img.shape[0]
+            jpeg_recon = np.zeros((h, w))
+            res_recon = np.zeros((h, w))
+            quan_recon = []
+            for y in range(0, h - size + 1, size):
+                for x in range(0, w - size + 1, size):
+                    mcu = img[y:y+size,x:x+size]
+                    quan = jpeg.encode_mcu(mcu)
+                    quan_recon.append(quan)
+                    decoded_mcu = jpeg.decode_mcu(quan)
+                    jpeg_recon[y:y+size,x:x+size] = decoded_mcu
 
-        quan_recon = torch.from_numpy(np.array(quan_recon)).to(device, dtype=torch.float)
-        ipt = quan_recon.reshape(-1, 64, 1, 1)
-        opt = model(ipt)
-        for y in range(h//8):
-            for x in range(w//8):
-                res_recon[y*8:y*8+size,x*8:x*8+size] = opt[y*w//8+x].cpu().detach().numpy()*255
-        
+            quan_recon = torch.from_numpy(np.array(quan_recon)).to(device, dtype=torch.float)
+            ipt = quan_recon.reshape(-1, 64, 1, 1)
+            opt = model(ipt)
+            for y in range(h//8):
+                for x in range(w//8):
+                    res_recon[y*8:y*8+size,x*8:x*8+size] = opt[y*w//8+x].cpu().detach().numpy()*255
+        else:
+            img = np.float32(cv2.cvtColor(cv2.imread(f"{data_path}/{name}"), cv2.COLOR_BGR2YCR_CB))
+            w = img.shape[1]
+            h = img.shape[0]
+            batch_size = 2000
+            img = img[:h//8*8, :w//8*8]
+            jpeg_recon = np.zeros(img.shape)
+            res_recon = np.zeros(img.shape)
+            quan_recon = []
+            for y in range(0, img.shape[0] - size + 1, size):
+                    for x in range(0, img.shape[1] - size + 1, size):
+                        mcu = img[y:y+size,x:x+size]
+                        dct = jpeg.dct(mcu)
+                        quan = jpeg.quanti(dct)
+                        chw = quan.transpose(2, 0, 1)
+                        yy = chw[0].reshape(64, 1, 1)
+                        cr = cv2.resize(chw[1], (4, 4), interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                        cb = cv2.resize(chw[2], (4, 4), interpolation=cv2.INTER_AREA).reshape(16, 1, 1)
+                        quan_recon.append(np.concatenate((yy, cr, cb)))
+                        decoded_mcu = jpeg.decode_mcu(quan)
+                        jpeg_recon[y:y+size,x:x+size] = decoded_mcu
+
+            ipt = torch.from_numpy(np.array(quan_recon)[:batch_size]).to(device, dtype=torch.float)
+            opt = model(ipt)
+            c=0
+            start = 0
+            for y in range(img.shape[0]//8):
+                for x in range(img.shape[1]//8):
+                    if (c % batch_size) == 0:
+                        start = c//batch_size * batch_size
+                        ipt = torch.from_numpy(np.array(quan_recon)[start:start + batch_size]).to(device, dtype=torch.float)
+                        opt = model(ipt)
+                    test = opt[y*img.shape[1]//8+x - start].cpu().detach().numpy()*255
+                    res_recon[y*8:y*8+size,x*8:x*8+size] = test.transpose(1,2,0)
+                    c+=1
+            
         jpg_mse = np.sum((jpeg_recon - img)**2)
         res_mse = np.sum((res_recon - img)**2)
         jpg_psnr = psnr(img, jpeg_recon)
