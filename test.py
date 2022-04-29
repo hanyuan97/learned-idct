@@ -134,7 +134,10 @@ if __name__ == "__main__":
                     test = opt[y*img.shape[1]//8+x - start].cpu().detach().numpy()*255
                     res_recon[y*8:y*8+size,x*8:x*8+size] = test.transpose(1,2,0)
                     c+=1
-            
+                    
+        jpeg_recon = cv2.cvtColor(jpeg_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
+        res_recon = cv2.cvtColor(res_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
+         
         jpg_mse = np.sum((jpeg_recon - img)**2)
         res_mse = np.sum((res_recon - img)**2)
         jpg_psnr = psnr(img, jpeg_recon)
@@ -151,8 +154,8 @@ if __name__ == "__main__":
         log_file.write(f"{jpg_psnr},")
         log_file.write(f"{res_psnr}\n")
         
-        cv2.imwrite(f"{save_path}/{name}_jpeg_recon.png", cv2.cvtColor(jpeg_recon.astype('uint8'), cv2.COLOR_YCR_CB2RGB))
-        cv2.imwrite(f"{save_path}/{name}_res_recon.png", cv2.cvtColor(res_recon.astype('uint8'), cv2.COLOR_YCR_CB2RGB))
+        cv2.imwrite(f"{save_path}/{name}_jpeg_recon.png", jpeg_recon)
+        cv2.imwrite(f"{save_path}/{name}_res_recon.png", res_recon)
 
     l = len(test_images)
     a_jpg_mse /= l
