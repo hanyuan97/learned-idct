@@ -134,7 +134,8 @@ if __name__ == "__main__":
                     test = opt[y*img.shape[1]//8+x - start].cpu().detach().numpy()*255
                     res_recon[y*8:y*8+size,x*8:x*8+size] = test.transpose(1,2,0)
                     c+=1
-                    
+              
+        img = cv2.cvtColor(img.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
         jpeg_recon = cv2.cvtColor(jpeg_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
         res_recon = cv2.cvtColor(res_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
          

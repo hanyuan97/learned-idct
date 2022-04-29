@@ -13,6 +13,7 @@ class JPEG:
                                 [24, 35, 55, 64, 81 , 104, 113, 92 ],
                                 [49, 64, 78, 87, 103, 121, 120, 101],
                                 [72, 92, 95, 98, 112, 100, 103, 99 ]])
+        
         self.Qcrcb = np.array([ [17, 18, 24, 47, 99 , 99 , 99 , 99 ],
                                 [18, 21, 26, 66, 99 , 99 , 99 , 99 ],
                                 [24, 26, 56, 99, 99 , 99 , 99 , 99 ],
@@ -66,7 +67,10 @@ class JPEG:
     
     def iquanti(self, quan):
         if self.color:
-            return np.dstack((np.round(quan[0] * (self.Qy * self.Q_F)), np.round(cv2.resize(quan[1], (8, 8)) * (self.Qcrcb * self.Q_F)), np.round(cv2.resize(quan[2], (8, 8)) * (self.Qcrcb * self.Q_F))))
+            yy = np.round(quan[0] * (self.Qy * self.Q_F))
+            cr = np.round(cv2.resize(quan[1], (8, 8), interpolation=cv2.INTER_NEAREST) * (self.Qcrcb * self.Q_F))
+            cb = np.round(cv2.resize(quan[2], (8, 8), interpolation=cv2.INTER_NEAREST) * (self.Qcrcb * self.Q_F))
+            return np.dstack((yy, cr, cb))
         return np.round(quan * (self.Qy * self.Q_F))
     
     def setQF(self, qf):
