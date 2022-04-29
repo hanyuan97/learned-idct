@@ -66,7 +66,7 @@ class JPEG:
     
     def iquanti(self, quan):
         if self.color:
-            return np.dstack((quan[:,:,0] * (self.Qy * self.Q_F), quan[:,:,1] * (self.Qcrcb * self.Q_F), quan[:,:,2] * (self.Qcrcb * self.Q_F)))
+            return np.dstack((np.round(quan[0] * (self.Qy * self.Q_F)), np.round(cv2.resize(quan[1], (8, 8)) * (self.Qcrcb * self.Q_F)), np.round(cv2.resize(quan[2], (8, 8)) * (self.Qcrcb * self.Q_F))))
         return np.round(quan * (self.Qy * self.Q_F))
     
     def setQF(self, qf):
