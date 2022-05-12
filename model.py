@@ -151,16 +151,23 @@ class RESIDCT(nn.Module):
 
 
 class RESJPEGDECODER(nn.Module):
-    def __init__(self, num_channels=64, size=8) -> None:
+    def __init__(self, num_channels=64, sample="444") -> None:
         super(RESJPEGDECODER, self).__init__()
-        self.crcbblock = nn.Sequential(
-            nn.ConvTranspose2d(32, 128, kernel_size=8, padding=0),
-            nn.PReLU()
-        )
-        self.block1 = nn.Sequential(
-            nn.ConvTranspose2d(num_channels, 64, kernel_size=8, padding=0),
-            nn.PReLU()
-        )
+        self.sample = sample
+        if sample == "420":
+            self.crcbblock = nn.Sequential(
+                nn.ConvTranspose2d(128, 128, kernel_size=16, padding=0),
+                nn.PReLU()
+            )
+            self.yblock = nn.Sequential(
+                nn.ConvTranspose2d(256, 64, kernel_size=16, padding=0),
+                nn.PReLU()
+            )
+        else:
+            self.ycrcbblock = nn.Sequential(
+                nn.ConvTranspose2d(192, 192, kernel_size=8, padding=0),
+                nn.PReLU()
+            )
         self.block2 = ResidualBlock(192)
         self.block3 = ResidualBlock(192)
         self.block4 = ResidualBlock(192)
@@ -172,9 +179,13 @@ class RESJPEGDECODER(nn.Module):
         )
         self.block8 = nn.Conv2d(192, 3, kernel_size=3, padding=3//2)
     def forward(self, x):
-        block1 = self.block1(x[:,:64])
-        crcb = self.crcbblock(x[:,64:])
-        cat1 = torch.cat((block1, crcb), 1)
+        if self.sample == "420":
+            yblock = self.yblock(x[:,:256])
+            crcb = self.crcbblock(x[:,256:])
+            cat1 = torch.cat((yblock, crcb), 1)
+        else:
+            cat1 = self.ycrcbblock(x)
+        
         block2 = self.block2(cat1)
         block3 = self.block3(block2)
         block4 = self.block4(block3)

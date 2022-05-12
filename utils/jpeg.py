@@ -2,9 +2,10 @@ import cv2
 import numpy as np
 
 class JPEG:
-    def __init__(self, qf=1, color=False) -> None:
+    def __init__(self, qf=1, is_color=False, sample="444") -> None:
         self.Q_F = qf
-        self.color = color
+        self.is_color = is_color
+        self.sample = sample
         self.Qy =    np.array([ [16, 11, 10, 16, 24 , 40 , 51 , 61 ],
                                 [12, 12, 14, 19, 26 , 58 , 60 , 55 ],
                                 [14, 13, 16, 24, 40 , 57 , 69 , 56 ],
@@ -12,7 +13,7 @@ class JPEG:
                                 [18, 22, 37, 56, 68 , 109, 103, 77 ],
                                 [24, 35, 55, 64, 81 , 104, 113, 92 ],
                                 [49, 64, 78, 87, 103, 121, 120, 101],
-                                [72, 92, 95, 98, 112, 100, 103, 99 ]])
+                                [72, 92, 95, 98, 112, 100, 103, 99 ],])
         
         self.Qcrcb = np.array([ [17, 18, 24, 47, 99 , 99 , 99 , 99 ],
                                 [18, 21, 26, 66, 99 , 99 , 99 , 99 ],
@@ -50,23 +51,24 @@ class JPEG:
         return idct
     
     def dct(self, mcu):
-        if self.color:
+        mcu -= 128
+        if self.is_color:
             # return np.stack((np.round(cv2.dct(mcu[:,:,0]-128)), np.round(cv2.dct(mcu[:,:,1]-128)), np.round(cv2.dct(mcu[:,:,2]-128))), axis=2)
-            return np.dstack((np.round(cv2.dct(mcu[:,:,0]-128)), np.round(cv2.dct(mcu[:,:,1]-128)), np.round(cv2.dct(mcu[:,:,2]-128))))
-        return np.round(cv2.dct(mcu-128))
+            return np.dstack((np.round(cv2.dct(mcu[:,:,0])), np.round(cv2.dct(mcu[:,:,1])), np.round(cv2.dct(mcu[:,:,2]))))
+        return np.round(cv2.dct(mcu))
 
     def idct(self, iquan):
-        if self.color:
-            return np.dstack((np.round(cv2.idct(iquan[:,:,0])) + 128, np.round(cv2.idct(iquan[:,:,1])) + 128, np.round(cv2.idct(iquan[:,:,2])) + 128))
+        if self.is_color:
+            return np.dstack((np.round(cv2.idct(iquan[:,:,0])), np.round(cv2.idct(iquan[:,:,1])), np.round(cv2.idct(iquan[:,:,2])))) + 128
         return np.round(cv2.idct(iquan)) + 128
     
     def quanti(self, dct):
-        if self.color:
+        if self.is_color:
            return np.dstack((dct[:,:,0] / (self.Qy * self.Q_F), dct[:,:,1] / (self.Qcrcb * self.Q_F), dct[:,:,2] / (self.Qcrcb * self.Q_F)))
         return np.round(dct / (self.Qy * self.Q_F))
     
     def iquanti(self, quan):
-        if self.color:
+        if self.is_color:
             yy = np.round(quan[0] * (self.Qy * self.Q_F))
             cr = np.round(cv2.resize(quan[1], (8, 8), interpolation=cv2.INTER_NEAREST) * (self.Qcrcb * self.Q_F))
             cb = np.round(cv2.resize(quan[2], (8, 8), interpolation=cv2.INTER_NEAREST) * (self.Qcrcb * self.Q_F))
@@ -76,5 +78,5 @@ class JPEG:
     def setQF(self, qf):
         self.Q_F = qf
     
-    def setColor(self, color):
-        self.color = color
+    def setColor(self, is_color):
+        self.is_color = is_color

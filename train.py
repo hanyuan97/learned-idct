@@ -12,8 +12,8 @@ from tqdm import tqdm
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 def init(args):
-    EPOCH, model_type, dataset, dct_size, train_batch, val_batch, train_ratio, works, ndims, qf = args.epoch, args.model_type, args.dataset, args.dct_size, args.batch, args.val_batch, args.train_ratio, args.works, args.ndims, args.qf
-    dctDataset = DCTDataset(filename=dataset, ndims=ndims, q=qf)
+    EPOCH, model_type, dataset, dct_size, train_batch, val_batch, train_ratio, works, ndims, qf, sample = args.epoch, args.model_type, args.dataset, args.dct_size, args.batch, args.val_batch, args.train_ratio, args.works, args.ndims, args.qf, args.sample
+    dctDataset = DCTDataset(filename=dataset, ndims=ndims, q=qf, sample=sample)
     train_num = int(len(dctDataset) * args.train_ratio)
     val_num = len(dctDataset) - train_num
     
@@ -42,7 +42,7 @@ def init(args):
     elif model_type == "res":
         model = RESIDCT()
     elif model_type == "res_dec":
-        model = RESJPEGDECODER()
+        model = RESJPEGDECODER(sample=sample)
     
     
     if not os.path.exists("./loss_log"):
@@ -104,6 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--epoch", type=int, default=20)
     parser.add_argument("-m", "--model_type", type=str, default="cnn")
     parser.add_argument("-d", "--dataset", type=str, default="dataset")
+    parser.add_argument("-sp", "--sample", type=str, default="444")
     parser.add_argument("-b", "--batch", type=int, default=64)
     parser.add_argument("-vb", "--val_batch", type=int, default=32)
     parser.add_argument("-ds", "--dct_size", type=int, default=8)

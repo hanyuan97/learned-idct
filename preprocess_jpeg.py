@@ -9,7 +9,7 @@ import random
 jpeg = JPEG(qf=1)
 
 def preprocess(image_paths, size=8, gray=False, max=100, dct=False) -> None: 
-    jpeg.setColor(not gray)
+    jpeg.setColor(gray)
     C = 1 if gray else 3
     patches = []
     labels = []
@@ -21,12 +21,22 @@ def preprocess(image_paths, size=8, gray=False, max=100, dct=False) -> None:
         for i in range(max):
             x = random.randint(0, int(img.shape[1]-size-1))
             y = random.randint(0, int(img.shape[0]-size-1))
-            mcu = img[y:y+size, x:x+size]
+            mcu = img[y:y+size, x:x+size].copy()
+            labels.append((mcu.copy()/255).transpose(2, 0, 1))
             if dct:
-                patches.append(jpeg.dct(mcu))
+                if size == 16:
+                    mcu_y = mcu[:, :, 0]
+                    dct_y0 = jpeg.dct(mcu_y[:8, :8])
+                    dct_y1 = jpeg.dct(mcu_y[:8, 8:])
+                    dct_y2 = jpeg.dct(mcu_y[8:, 0:8])
+                    dct_y3 = jpeg.dct(mcu_y[8:, 8:])
+                    dct_cr = jpeg.dct(mcu[1::2, ::2, 1].copy())
+                    dct_cb = jpeg.dct(mcu[0::2, ::2, 2].copy())
+                    patches.append([dct_y0, dct_y1, dct_y2, dct_y3, dct_cr, dct_cb])
+                else:
+                    patches.append(jpeg.dct(mcu))
             else:
                 patches.append(jpeg.encode_mcu(mcu))
-            labels.append((mcu/255).transpose(2, 0, 1))
     return patches, labels
 
 def save_file(x, y, output_path, filename, size, max, gray):
