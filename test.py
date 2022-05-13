@@ -20,10 +20,12 @@ def psnr(img1, img2):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-q", "--qf", type=int, default=1)
+    parser.add_argument("-b", "--batch", type=int, default=100)
     parser.add_argument("-w", "--weight", type=str, default="")
     parser.add_argument("-sp", "--sample", type=str, default="444")
     parser.add_argument("-l", "--lr", action="store_true")
     parser.add_argument("-g", "--gray", action="store_true")
+    
     args = parser.parse_args()
     
     model_type = "res_dec"
@@ -110,7 +112,7 @@ if __name__ == "__main__":
             img = np.float32(cv2.cvtColor(cv2.imread(f"{data_path}/{name}"), cv2.COLOR_BGR2YCR_CB))
             w = img.shape[1]
             h = img.shape[0]
-            batch_size = 100
+            batch_size = args.batch
             img = img[:h//crop_size*crop_size, :w//crop_size*crop_size]
             jpeg_recon = np.zeros(img.shape)
             res_recon = np.zeros(img.shape)
