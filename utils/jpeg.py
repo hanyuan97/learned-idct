@@ -64,7 +64,7 @@ class JPEG:
     
     def quanti(self, dct, isCrCb=False):
         if self.is_color:
-           return np.dstack((dct[:,:,0] / (self.Qy * self.Q_F), dct[:,:,1] / (self.Qcrcb * self.Q_F), dct[:,:,2] / (self.Qcrcb * self.Q_F)))
+           return np.dstack((np.round(dct[:,:,0] / (self.Qy * self.Q_F)), np.round(dct[:,:,1] / (self.Qcrcb * self.Q_F)), np.round(dct[:,:,2] / (self.Qcrcb * self.Q_F))))
         if isCrCb:
             return np.round(dct / (self.Qcrcb * self.Q_F))
         
@@ -73,13 +73,22 @@ class JPEG:
     def iquanti(self, quan, isCrCb=False):
         if self.is_color:
             yy = np.round(quan[0] * (self.Qy * self.Q_F))
-            cr = np.round(cv2.resize(quan[1], (8, 8), interpolation=cv2.INTER_NEAREST) * (self.Qcrcb * self.Q_F))
-            cb = np.round(cv2.resize(quan[2], (8, 8), interpolation=cv2.INTER_NEAREST) * (self.Qcrcb * self.Q_F))
+            cr = np.round(quan[1] * (self.Qcrcb * self.Q_F))
+            cb = np.round(quan[2] * (self.Qcrcb * self.Q_F))
             return np.dstack((yy, cr, cb))
         if isCrCb:
             return np.round(quan * (self.Qcrcb * self.Q_F))
         
         return np.round(quan * (self.Qy * self.Q_F))
+    
+    def split_16_ycrcb(self, img):
+        y0 = img[:8, :8, 0].copy()
+        y1 = img[:8, 8:, 0].copy()
+        y2 = img[8:, :8, 0].copy()
+        y3 = img[8:, 8:, 0].copy()
+        cr = img[1::2, ::2, 1].copy()
+        cb = img[0::2, ::2, 2].copy()
+        return [y0, y1, y2, y3, cr, cb]
     
     def setQF(self, qf):
         self.Q_F = qf

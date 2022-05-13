@@ -20,6 +20,8 @@ def psnr(img1, img2):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-q", "--qf", type=int, default=1)
+    parser.add_argument("-w", "--weight", type=str, default="")
+    parser.add_argument("-sp", "--sample", type=str, default="444")
     parser.add_argument("-l", "--lr", action="store_true")
     parser.add_argument("-g", "--gray", action="store_true")
     args = parser.parse_args()
@@ -27,15 +29,16 @@ if __name__ == "__main__":
     model_type = "res_dec"
     qf = args.qf
     
-    jpeg = JPEG(qf, not args.gray)
+    jpeg = JPEG(qf, not args.gray and args.sample == "444")
     size = 8
     q_str = ""
     if qf > 0:
         q_str = str(qf)
     elif qf == -1:
         q_str = "random"
-    modelname = f"jpeg_model_color_{q_str}"
-    save_path = f"./jpeg_result/color_{q_str}"
+    weight = args.weight
+    save_path = f"./jpeg_result/color_q{q_str}_s{args.sample}"
+    crop_size = 8 if args.sample == "444" else 16
     if not os.path.exists(save_path):
         os.mkdir(save_path)
     log_file = open(f"{save_path}/detail.log", "w")
@@ -58,10 +61,10 @@ if __name__ == "__main__":
     elif model_type == "res":
         model = RESIDCT(num_channels=64, size=size)
     elif model_type == "res_dec":
-        model = RESJPEGDECODER()
+        model = RESJPEGDECODER(sample=args.sample)
 
     model.to(device)
-    model.load_state_dict(torch.load(f"./weights/{modelname}.pth"))
+    model.load_state_dict(torch.load(f"./weights/{weight}.pth"))
     model.eval()
     # test_set = load_file("data", filename)
     # print(len(dctDataset))
@@ -76,6 +79,7 @@ if __name__ == "__main__":
     a_jpg_psnr = 0
     a_res_mse = 0
     a_res_psnr = 0
+    test_images = ["0805_4x_lr.png"]
     for name in test_images:
         if args.gray:
             img = np.float32(cv2.imread(f"{data_path}/{name}", cv2.IMREAD_GRAYSCALE))
@@ -103,44 +107,63 @@ if __name__ == "__main__":
             img = np.float32(cv2.cvtColor(cv2.imread(f"{data_path}/{name}"), cv2.COLOR_BGR2YCR_CB))
             w = img.shape[1]
             h = img.shape[0]
-            batch_size = 2000
-            img = img[:h//8*8, :w//8*8]
+            batch_size = 100
+            img = img[:h//crop_size*crop_size, :w//crop_size*crop_size]
             jpeg_recon = np.zeros(img.shape)
             res_recon = np.zeros(img.shape)
             quan_recon = []
-            for y in range(0, img.shape[0] - size + 1, size):
-                for x in range(0, img.shape[1] - size + 1, size):
-                    mcu = img[y:y+size,x:x+size]
-                    dct = jpeg.dct(mcu)
-                    quan = jpeg.quanti(dct)
-                    chw = quan.transpose(2, 0, 1)
-                    yy = chw[0]
-                    cr = cv2.resize(chw[1], (4, 4), interpolation=cv2.INTER_AREA)
-                    cb = cv2.resize(chw[2], (4, 4), interpolation=cv2.INTER_AREA)
-                    decoded_mcu = jpeg.decode_mcu([yy, cr, cb])
-                    quan_recon.append(np.concatenate((yy.reshape(64, 1, 1), cr.reshape(16, 1, 1), cb.reshape(16, 1, 1))))
-                    jpeg_recon[y:y+size,x:x+size] = decoded_mcu
-
+            if args.sample == "444":
+                for y in range(0, img.shape[0] - crop_size + 1, crop_size):
+                    for x in range(0, img.shape[1] - crop_size + 1, crop_size):
+                        mcu = img[y:y+crop_size,x:x+crop_size].copy()
+                        dct = jpeg.dct(mcu)
+                        quan = jpeg.quanti(dct)
+                        chw = quan.transpose(2, 0, 1)
+                        yy = chw[0].copy()
+                        cr = chw[1].copy()
+                        cb = chw[2].copy()
+                        quan_recon.append(np.concatenate((yy.reshape(64, 1, 1), cr.reshape(64, 1, 1), cb.reshape(64, 1, 1))))
+                        decoded_mcu = jpeg.decode_mcu([yy, cr, cb])
+                        jpeg_recon[y:y+crop_size,x:x+crop_size] = decoded_mcu
+            else:
+                print("420")
+                for y in range(0, img.shape[0] - crop_size + 1, crop_size):
+                    for x in range(0, img.shape[1] - crop_size + 1, crop_size):
+                        mcu_arr = jpeg.split_16_ycrcb(img[y:y+crop_size,x:x+crop_size].copy())
+                        dct_arr = [jpeg.dct(i) for i in mcu_arr]
+                        qua_arr = [jpeg.quanti(item, idx>3) for idx, item in enumerate(dct_arr)]
+                        iqua_arr = [jpeg.iquanti(item, idx>3) for idx, item in enumerate(qua_arr)]
+                        idct_arr = [jpeg.idct(i) for i in iqua_arr]
+                        quan_recon.append(np.concatenate([i.reshape(64, 1, 1) for i in qua_arr]))
+                        jpeg_recon[y:y+crop_size,x:x+crop_size, 1] = cv2.resize(idct_arr[4], (16, 16))
+                        jpeg_recon[y:y+crop_size,x:x+crop_size, 2] = cv2.resize(idct_arr[5], (16, 16))
+                        jpeg_recon[y:y+8,x:x+8, 0] = idct_arr[0]
+                        jpeg_recon[y:y+8,x+8:x+16, 0] = idct_arr[1]
+                        jpeg_recon[y+8:y+16,x:x+8, 0] = idct_arr[2]
+                        jpeg_recon[y+8:y+16,x+8:x+16, 0] = idct_arr[3]
+                
+            jpeg_recon[np.where(jpeg_recon > 255)] = 255
+            jpeg_recon[np.where(jpeg_recon < 0)] = 0
             ipt = torch.from_numpy(np.array(quan_recon)[:batch_size]).to(device, dtype=torch.float)
             opt = model(ipt)
             c=0
             start = 0
-            for y in range(img.shape[0]//8):
-                for x in range(img.shape[1]//8):
+            for y in range(img.shape[0]//crop_size):
+                for x in range(img.shape[1]//crop_size):
                     if (c % batch_size) == 0:
                         start = c//batch_size * batch_size
                         ipt = torch.from_numpy(np.array(quan_recon)[start:start + batch_size]).to(device, dtype=torch.float)
                         opt = model(ipt)
-                    test = opt[y*img.shape[1]//8+x - start].cpu().detach().numpy()*255
-                    res_recon[y*8:y*8+size,x*8:x*8+size] = test.transpose(1,2,0)
+                    test = opt[y*img.shape[1]//crop_size+x - start].cpu().detach().numpy()*255
+                    res_recon[y*crop_size:y*crop_size+crop_size,x*crop_size:x*crop_size+crop_size] = test.transpose(1,2,0)
                     c+=1
               
         img = cv2.cvtColor(img.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
         jpeg_recon = cv2.cvtColor(jpeg_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
         res_recon = cv2.cvtColor(res_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
          
-        jpg_mse = np.sum((jpeg_recon - img)**2)
-        res_mse = np.sum((res_recon - img)**2)
+        jpg_mse = np.mean((jpeg_recon - img)**2)
+        res_mse = np.mean((res_recon - img)**2)
         jpg_psnr = psnr(img, jpeg_recon)
         res_psnr = psnr(img, res_recon)
         a_jpg_mse += jpg_mse

@@ -28,7 +28,7 @@ def preprocess(image_paths, size=8, gray=False, max=100, dct=False) -> None:
                     mcu_y = mcu[:, :, 0]
                     dct_y0 = jpeg.dct(mcu_y[:8, :8])
                     dct_y1 = jpeg.dct(mcu_y[:8, 8:])
-                    dct_y2 = jpeg.dct(mcu_y[8:, 0:8])
+                    dct_y2 = jpeg.dct(mcu_y[8:, :8])
                     dct_y3 = jpeg.dct(mcu_y[8:, 8:])
                     dct_cr = jpeg.dct(mcu[1::2, ::2, 1].copy())
                     dct_cb = jpeg.dct(mcu[0::2, ::2, 2].copy())
