@@ -203,8 +203,8 @@ if __name__ == "__main__":
         log_file.write(f"{res_yc_psnr},")
         log_file.write(f"{res_bgr_psnr}\n")
         
-        cv2.imwrite(f"{save_path}/{name}_jpeg_recon.png", jpeg_recon)
-        cv2.imwrite(f"{save_path}/{name}_res_recon.png", res_recon)
+        cv2.imwrite(f"{save_path}/{name}_jpeg_recon.png", jpeg_bgr)
+        cv2.imwrite(f"{save_path}/{name}_res_recon.png", res_bgr)
 
     l = len(test_images)
     a_jpg_mse /= l
