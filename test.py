@@ -76,10 +76,13 @@ if __name__ == "__main__":
     else:
         test_images = os.listdir(data_path)
     a_jpg_mse = 0
-    a_jpg_psnr = 0
+    a_jpg_y_psnr = 0
+    a_jpg_yc_psnr = 0
+    a_jpg_bgr_psnr = 0
     a_res_mse = 0
-    a_res_psnr = 0
-    test_images = ["0805_4x_lr.png"]
+    a_res_y_psnr = 0
+    a_res_yc_psnr = 0
+    a_res_bgr_psnr = 0
     for name in test_images:
         if args.gray:
             img = np.float32(cv2.imread(f"{data_path}/{name}", cv2.IMREAD_GRAYSCALE))
@@ -126,7 +129,6 @@ if __name__ == "__main__":
                         decoded_mcu = jpeg.decode_mcu([yy, cr, cb])
                         jpeg_recon[y:y+crop_size,x:x+crop_size] = decoded_mcu
             else:
-                print("420")
                 for y in range(0, img.shape[0] - crop_size + 1, crop_size):
                     for x in range(0, img.shape[1] - crop_size + 1, crop_size):
                         mcu_arr = jpeg.split_16_ycrcb(img[y:y+crop_size,x:x+crop_size].copy())
@@ -158,37 +160,66 @@ if __name__ == "__main__":
                     res_recon[y*crop_size:y*crop_size+crop_size,x*crop_size:x*crop_size+crop_size] = test.transpose(1,2,0)
                     c+=1
               
-        img = cv2.cvtColor(img.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
-        jpeg_recon = cv2.cvtColor(jpeg_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
-        res_recon = cv2.cvtColor(res_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
+        img_y = img[:, :, 0]
+        img_bgr = cv2.cvtColor(img.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
+        jpeg_y = jpeg_recon[:, :, 0]
+        jpeg_bgr = cv2.cvtColor(jpeg_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
+        res_y = res_recon[:, :, 0]
+        res_bgr = cv2.cvtColor(res_recon.astype('uint8'), cv2.COLOR_YCR_CB2BGR)
          
-        jpg_mse = np.mean((jpeg_recon - img)**2)
-        res_mse = np.mean((res_recon - img)**2)
-        jpg_psnr = psnr(img, jpeg_recon)
-        res_psnr = psnr(img, res_recon)
+        jpg_mse = np.mean((jpeg_bgr - img_bgr)**2)
+        res_mse = np.mean((res_bgr - img_bgr)**2)
+        
+        
+        jpg_y_psnr = psnr(img_y, jpeg_y)
+        jpg_yc_psnr = psnr(img, jpeg_recon)
+        jpg_bgr_psnr = psnr(img_bgr, jpeg_bgr)
+        
+        res_y_psnr = psnr(img_y, res_y)
+        res_yc_psnr = psnr(img, res_recon)
+        res_bgr_psnr = psnr(img_bgr, res_bgr)
+        
         a_jpg_mse += jpg_mse
-        a_jpg_psnr += jpg_psnr
+        a_jpg_y_psnr += jpg_y_psnr
+        a_jpg_yc_psnr += jpg_yc_psnr
+        a_jpg_bgr_psnr += jpg_bgr_psnr
+        
         a_res_mse += res_mse
-        a_res_psnr += res_psnr
+        a_res_y_psnr += res_y_psnr
+        a_res_yc_psnr += res_yc_psnr
+        a_res_bgr_psnr += res_bgr_psnr
+        
         log_file.write(f"{name},")
         log_file.write(f"{w*h},")
         
         log_file.write(f"{jpg_mse},")
         log_file.write(f"{res_mse},")
-        log_file.write(f"{jpg_psnr},")
-        log_file.write(f"{res_psnr}\n")
+        log_file.write(f"{jpg_y_psnr},")
+        log_file.write(f"{jpg_yc_psnr},")
+        log_file.write(f"{jpg_bgr_psnr},")
+        log_file.write(f"{res_y_psnr},")
+        log_file.write(f"{res_yc_psnr},")
+        log_file.write(f"{res_bgr_psnr}\n")
         
         cv2.imwrite(f"{save_path}/{name}_jpeg_recon.png", jpeg_recon)
         cv2.imwrite(f"{save_path}/{name}_res_recon.png", res_recon)
 
     l = len(test_images)
     a_jpg_mse /= l
-    a_jpg_psnr /= l
+    a_jpg_y_psnr /= l
+    a_jpg_yc_psnr /= l
+    a_jpg_bgr_psnr /= l
     a_res_mse /= l
-    a_res_psnr /= l
+    a_res_y_psnr /= l
+    a_res_yc_psnr /= l
+    a_res_bgr_psnr /= l
     log_file.write(f"----------------------------------\n")
     log_file.write(f"{a_jpg_mse},")
     log_file.write(f"{a_res_mse},")
-    log_file.write(f"{a_jpg_psnr},")
-    log_file.write(f"{a_res_psnr}\n")
+    log_file.write(f"{a_jpg_y_psnr},")
+    log_file.write(f"{a_jpg_yc_psnr},")
+    log_file.write(f"{a_jpg_bgr_psnr},")
+    log_file.write(f"{a_res_y_psnr},")
+    log_file.write(f"{a_res_yc_psnr},")
+    log_file.write(f"{a_res_bgr_psnr}\n")
     log_file.close()
