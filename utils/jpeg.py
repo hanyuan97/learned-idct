@@ -62,17 +62,23 @@ class JPEG:
             return np.dstack((np.round(cv2.idct(iquan[:,:,0])), np.round(cv2.idct(iquan[:,:,1])), np.round(cv2.idct(iquan[:,:,2])))) + 128
         return np.round(cv2.idct(iquan)) + 128
     
-    def quanti(self, dct):
+    def quanti(self, dct, isCrCb=False):
         if self.is_color:
            return np.dstack((dct[:,:,0] / (self.Qy * self.Q_F), dct[:,:,1] / (self.Qcrcb * self.Q_F), dct[:,:,2] / (self.Qcrcb * self.Q_F)))
+        if isCrCb:
+            return np.round(dct / (self.Qcrcb * self.Q_F))
+        
         return np.round(dct / (self.Qy * self.Q_F))
     
-    def iquanti(self, quan):
+    def iquanti(self, quan, isCrCb=False):
         if self.is_color:
             yy = np.round(quan[0] * (self.Qy * self.Q_F))
             cr = np.round(cv2.resize(quan[1], (8, 8), interpolation=cv2.INTER_NEAREST) * (self.Qcrcb * self.Q_F))
             cb = np.round(cv2.resize(quan[2], (8, 8), interpolation=cv2.INTER_NEAREST) * (self.Qcrcb * self.Q_F))
             return np.dstack((yy, cr, cb))
+        if isCrCb:
+            return np.round(quan * (self.Qcrcb * self.Q_F))
+        
         return np.round(quan * (self.Qy * self.Q_F))
     
     def setQF(self, qf):

@@ -31,7 +31,7 @@ class DCTDataset(Dataset):
                 if self.q == -1:
                     self.jpeg.setQF(random.randint(1, 10))
                 
-                q_arr = [self.jpeg.quanti(i).reshape(64, 1, 1) for i in self.data["x"][index]]
+                q_arr = [self.jpeg.quanti(item, idx>3).reshape(64, 1, 1) for idx, item in enumerate(self.data["x"][index])]
                 x = np.concatenate(q_arr)
                 return x, self.data["y"][index]
             elif self.sample == "444":
