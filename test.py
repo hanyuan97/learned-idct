@@ -34,7 +34,7 @@ if __name__ == "__main__":
     crop_size = 8 if args.sample == "444" else 16
     if not os.path.exists(save_path):
         os.mkdir(save_path)
-    log_file = open(f"{save_path}/detail.log", "w")
+    log_file = open(f"{save_path}/detail_log.csv", "w")
     train_on_gpu = torch.cuda.is_available()
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     # dctDataset = DCTDataset(filename=filename)
@@ -63,11 +63,11 @@ if __name__ == "__main__":
     # print(len(dctDataset))
 
     data_path = "../dataset/DIV2K_valid_HR"
-    # test_images = ["0848_4x_lr.png", "0850_4x_lr.png", "0869_4x_lr.png", "0900_4x_lr.png"]
     if args.lr:
         test_images = [i for i in os.listdir(data_path) if i.endswith("lr.png")]
     else:
         test_images = os.listdir(data_path)
+    # test_images = ["0848_4x_lr.png", "0850_4x_lr.png", "0869_4x_lr.png", "0900_4x_lr.png"]
     a_jpg_yuv_mse = []
     a_jpg_bgr_mse = []
     a_jpg_yuv_psnr = []
@@ -84,6 +84,7 @@ if __name__ == "__main__":
     a_res_bgr_ssim = []
     a_res_yuv_ms_ssim = []
     a_res_bgr_ms_ssim = []
+    log_file.write("filename,w*h,jpg_yuv_mse,jpg_bgr_mse,res_yuv_mse,res_bgr_mse,jpg_psnr_y,jpg_psnr_u,jpg_psnr_v,jpg_psnr_b,jpg_psnr_g,jpg_psnr_r,res_psnr_y,res_psnr_u,res_psnr_v,res_psnr_b,res_psnr_g,res_psnr_r,jpg_ssim_y,jpg_ssim_u,jpg_ssim_v,jpg_ssim_b,jpg_ssim_g,jpg_ssim_r,res_ssim_y,res_ssim_u,res_ssim_v,res_ssim_b,res_ssim_g,res_ssim_r,jpg_ms_ssim_y,jpg_ms_ssim_u,jpg_ms_ssim_v,jpg_ms_ssim_b,jpg_ms_ssim_g,jpg_ms_ssim_r,res_ms_ssim_y,res_ms_ssim_u,res_ms_ssim_,res_ms_ssim_b,res_ms_ssim_g,res_ms_ssim_r,jpg_psnr_yuv,jpg_psnr_bgr,res_psnr_yuv,res_psnr_bgr,jpg_ssim_yuv,jpg_ssim_bgr,res_ssim_yuv,res_ssim_bgr,jpg_ms_ssim_yuv,jpg_ms_ssim_bgr,res_ms_ssim_yuv,res_ms_ssim_bgr\n")
     for name in test_images:
         if args.gray:
             img = np.float32(cv2.imread(f"{data_path}/{name}", cv2.IMREAD_GRAYSCALE))
@@ -175,15 +176,15 @@ if __name__ == "__main__":
         res_yuv_psnr = psnr(img, res_recon)
         res_bgr_psnr = psnr(img_bgr, res_bgr)
         
-        jpg_yuv_ssim = cal_ssim(img, jpeg_recon)
-        jpg_bgr_ssim = cal_ssim(img_bgr, jpeg_bgr)
-        res_yuv_ssim = cal_ssim(img, res_recon)
-        res_bgr_ssim = cal_ssim(img_bgr, res_bgr)
+        jpg_yuv_ssim = np.array([cal_ssim(img[:,:,i], jpeg_recon[:,:,i]) for i in range(3)])
+        jpg_bgr_ssim = np.array([cal_ssim(img_bgr[:,:,i], jpeg_bgr[:,:,i]) for i in range(3)])
+        res_yuv_ssim = np.array([cal_ssim(img[:,:,i], res_recon[:,:,i]) for i in range(3)])
+        res_bgr_ssim = np.array([cal_ssim(img_bgr[:,:,i], res_bgr[:,:,i]) for i in range(3)])
         
-        jpg_yuv_ms_ssim = cal_ms_ssim(img, jpeg_recon)
-        jpg_bgr_ms_ssim = cal_ms_ssim(img_bgr, jpeg_bgr)
-        res_yuv_ms_ssim = cal_ms_ssim(img, res_recon)
-        res_bgr_ms_ssim = cal_ms_ssim(img_bgr, res_bgr)
+        jpg_yuv_ms_ssim = np.array([cal_ms_ssim(img[:,:,i], jpeg_recon[:,:,i]) for i in range(3)])
+        jpg_bgr_ms_ssim = np.array([cal_ms_ssim(img_bgr[:,:,i], jpeg_bgr[:,:,i]) for i in range(3)])
+        res_yuv_ms_ssim = np.array([cal_ms_ssim(img[:,:,i], res_recon[:,:,i]) for i in range(3)])
+        res_bgr_ms_ssim = np.array([cal_ms_ssim(img_bgr[:,:,i], res_bgr[:,:,i]) for i in range(3)])
         
         a_jpg_yuv_mse.append(jpg_yuv_mse)
         a_jpg_bgr_mse.append(jpg_bgr_mse)
@@ -210,18 +211,30 @@ if __name__ == "__main__":
         opt += f"{jpg_bgr_mse},"
         opt += f"{res_yuv_mse},"
         opt += f"{res_bgr_mse},"
-        opt += f"{','.join(jpg_yuv_psnr)},"
-        opt += f"{','.join(jpg_bgr_psnr)},"
-        opt += f"{','.join(res_yuv_psnr)},"
-        opt += f"{','.join(res_bgr_psnr)},"
-        opt += f"{','.join(jpg_yuv_ssim)},"
-        opt += f"{','.join(jpg_bgr_ssim)},"
-        opt += f"{','.join(res_yuv_ssim)},"
-        opt += f"{','.join(res_bgr_ssim)},"
-        opt += f"{','.join(jpg_yuv_ms_ssim)},"
-        opt += f"{','.join(jpg_bgr_ms_ssim)},"
-        opt += f"{','.join(res_yuv_ms_ssim)},"
-        opt += f"{','.join(res_bgr_ms_ssim)}"
+        opt += f"{','.join(map(str, jpg_yuv_psnr.tolist()))},"
+        opt += f"{','.join(map(str, jpg_bgr_psnr.tolist()))},"
+        opt += f"{','.join(map(str, res_yuv_psnr.tolist()))},"
+        opt += f"{','.join(map(str, res_bgr_psnr.tolist()))},"
+        opt += f"{','.join(map(str, jpg_yuv_ssim.tolist()))},"
+        opt += f"{','.join(map(str, jpg_bgr_ssim.tolist()))},"
+        opt += f"{','.join(map(str, res_yuv_ssim.tolist()))},"
+        opt += f"{','.join(map(str, res_bgr_ssim.tolist()))},"
+        opt += f"{','.join(map(str, jpg_yuv_ms_ssim.tolist()))},"
+        opt += f"{','.join(map(str, jpg_bgr_ms_ssim.tolist()))},"
+        opt += f"{','.join(map(str, res_yuv_ms_ssim.tolist()))},"
+        opt += f"{','.join(map(str, res_bgr_ms_ssim.tolist()))},"
+        opt += f"{np.mean(jpg_yuv_psnr)},"
+        opt += f"{np.mean(jpg_bgr_psnr)},"
+        opt += f"{np.mean(res_yuv_psnr)},"
+        opt += f"{np.mean(res_bgr_psnr)},"
+        opt += f"{np.mean(jpg_yuv_ssim)},"
+        opt += f"{np.mean(jpg_bgr_ssim)},"
+        opt += f"{np.mean(res_yuv_ssim)},"
+        opt += f"{np.mean(res_bgr_ssim)},"
+        opt += f"{np.mean(jpg_yuv_ms_ssim)},"
+        opt += f"{np.mean(jpg_bgr_ms_ssim)},"
+        opt += f"{np.mean(res_yuv_ms_ssim)},"
+        opt += f"{np.mean(res_bgr_ms_ssim)}"
         print(opt)
         log_file.write(opt+"\n")
         
@@ -229,22 +242,35 @@ if __name__ == "__main__":
         cv2.imwrite(f"{save_path}/{name}_res_recon.png", res_bgr)
 
     opt = f"----------------------------------\n"
+    opt += "Average,x,"
     opt += f"{np.mean(a_jpg_yuv_mse)},"
     opt += f"{np.mean(a_jpg_bgr_mse)},"
     opt += f"{np.mean(a_res_yuv_mse)},"
     opt += f"{np.mean(a_res_bgr_mse)},"
-    opt += f"{','.join(np.mean(a_jpg_yuv_psnr, axis=0))},"
-    opt += f"{','.join(np.mean(a_jpg_bgr_psnr, axis=0))},"
-    opt += f"{','.join(np.mean(a_res_yuv_psnr, axis=0))},"
-    opt += f"{','.join(np.mean(a_res_bgr_psnr, axis=0))},"
-    opt += f"{','.join(np.mean(a_jpg_yuv_ssim, axis=0))},"
-    opt += f"{','.join(np.mean(a_jpg_bgr_ssim, axis=0))},"
-    opt += f"{','.join(np.mean(a_res_yuv_ssim, axis=0))},"
-    opt += f"{','.join(np.mean(a_res_bgr_ssim, axis=0))},"
-    opt += f"{','.join(np.mean(a_jpg_yuv_ms_ssim, axis=0))},"
-    opt += f"{','.join(np.mean(a_jpg_bgr_ms_ssim, axis=0))},"
-    opt += f"{','.join(np.mean(a_res_yuv_ms_ssim, axis=0))},"
-    opt += f"{','.join(np.mean(a_res_bgr_ms_ssim, axis=0))}"
+    opt += f"{','.join(map(str, np.mean(a_jpg_yuv_psnr, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_jpg_bgr_psnr, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_res_yuv_psnr, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_res_bgr_psnr, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_jpg_yuv_ssim, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_jpg_bgr_ssim, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_res_yuv_ssim, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_res_bgr_ssim, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_jpg_yuv_ms_ssim, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_jpg_bgr_ms_ssim, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_res_yuv_ms_ssim, axis=0).tolist()))},"
+    opt += f"{','.join(map(str, np.mean(a_res_bgr_ms_ssim, axis=0).tolist()))},"
+    opt += f"{np.mean(a_jpg_yuv_psnr)},"
+    opt += f"{np.mean(a_jpg_bgr_psnr)},"
+    opt += f"{np.mean(a_res_yuv_psnr)},"
+    opt += f"{np.mean(a_res_bgr_psnr)},"
+    opt += f"{np.mean(a_jpg_yuv_ssim)},"
+    opt += f"{np.mean(a_jpg_bgr_ssim)},"
+    opt += f"{np.mean(a_res_yuv_ssim)},"
+    opt += f"{np.mean(a_res_bgr_ssim)},"
+    opt += f"{np.mean(a_jpg_yuv_ms_ssim)},"
+    opt += f"{np.mean(a_jpg_bgr_ms_ssim)},"
+    opt += f"{np.mean(a_res_yuv_ms_ssim)},"
+    opt += f"{np.mean(a_res_bgr_ms_ssim)}"
     
     print(opt)
     log_file.write(opt+"\n")
