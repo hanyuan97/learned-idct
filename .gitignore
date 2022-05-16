@@ -3,6 +3,7 @@ __pycache__
 *.pickle
 *.pth
 loss_log/*
+jpeg_result/*
 output/*
 *.ppk
 *.sh

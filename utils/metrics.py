@@ -15,7 +15,7 @@ def psnr(img1, img2, max_val=255.):
     img2 = img2.astype(float_type)
     axis = (0, 1)
     if img1.ndim == 3:
-        axis = (0, 1,2)
+        axis = (0, 1)
     elif img1.ndim == 4:
         axis = (1, 2, 3)
     mse = np.mean(np.square(img1 - img2), axis=axis)
