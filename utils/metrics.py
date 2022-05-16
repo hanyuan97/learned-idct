@@ -13,7 +13,12 @@ def psnr(img1, img2, max_val=255.):
 
     img1 = img1.astype(float_type)
     img2 = img2.astype(float_type)
-    mse = np.mean(np.square(img1 - img2), axis=(1, 2, 3))
+    axis = (0, 1)
+    if img1.ndim == 3:
+        axis = (0, 1,2)
+    elif img1.ndim == 4:
+        axis = (1, 2, 3)
+    mse = np.mean(np.square(img1 - img2), axis=axis)
     psnr = 20 * np.log10(max_val) - 10 * np.log10(mse)
     return psnr
 
@@ -320,3 +325,23 @@ class MS_SSIM(torch.nn.Module):
             weights=self.weights,
             K=self.K,
         )
+        
+def hwc_to_tensor_chw(x):
+    if len(x.shape) == 3:
+        x = np.transpose(x, (2, 0, 1))
+        return torch.unsqueeze(torch.from_numpy(x.copy()).float().cuda(), 0)
+    elif len(x.shape) == 2:
+        x = torch.unsqueeze(torch.from_numpy(x.copy()).float().cuda(), 0)
+        return torch.unsqueeze(x, 0)
+
+def cal_ssim(x, y):
+    x = hwc_to_tensor_chw(x)
+    y = hwc_to_tensor_chw(y)
+    ssim_module = SSIM(data_range=255.0, size_average=True, channel=x.shape[1])
+    return ssim_module(x ,y).cpu().numpy()
+
+def cal_ms_ssim(x, y):
+    x = hwc_to_tensor_chw(x)
+    y = hwc_to_tensor_chw(y)
+    ms_ssim_module = MS_SSIM(data_range=255.0, size_average=True, channel=x.shape[1])
+    return ms_ssim_module(x ,y).cpu().numpy()
