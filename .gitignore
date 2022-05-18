@@ -8,3 +8,4 @@ output/*
 *.ppk
 *.sh
 *.log
+*.npz

@@ -9,7 +9,7 @@ import random
 jpeg = JPEG(qf=1)
 
 def preprocess(image_paths, size=8, gray=False, max=100, dct=False) -> None: 
-    jpeg.setColor(gray)
+    jpeg.setColor(not gray and size==8)
     C = 1 if gray else 3
     patches = []
     labels = []
@@ -40,13 +40,18 @@ def preprocess(image_paths, size=8, gray=False, max=100, dct=False) -> None:
     return patches, labels
 
 def save_file(x, y, output_path, filename, size, max, gray):
-    obj = {'x': x, 'y': y}
-    with open(output_path+f"/{filename}_{max}_{size}{'' if gray else '_color'}.pickle", "wb") as file:
-        pickle.dump(obj, file)
+    xData = np.array(x)
+    yData = np.array(y)
+    np.savez(f"{output_path}/{filename}_{max}_{size}{'' if gray else '_color'}.npz", x=xData, y=yData)
+    
+    # obj = {'x': x, 'y': y}
+    # with open(output_path+f"/{filename}_{max}_{size}{'' if gray else '_color'}.pickle", "wb") as file:
+    #     pickle.dump(obj, file)
 
 def load_file(path, filename):
-    with open(path+f"/{filename}.pickle", "rb") as file:
-        return pickle.load(file)
+    return np.load(f"{path}/{filename}.npz")
+    # with open(path+f"/{filename}.pickle", "rb") as file:
+    #     return pickle.load(file)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
