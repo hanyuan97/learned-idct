@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 class JPEG:
-    def __init__(self, qf=1, is_color=False, sample="444") -> None:
+    def __init__(self, qf=50, is_color=False, sample="444") -> None:
         self.quality_factor = qf
         self.is_color = is_color
         self.sample = sample
@@ -57,17 +57,17 @@ class JPEG:
         mcu -= 128
         if self.is_color:
             # return np.stack((np.round(cv2.dct(mcu[:,:,0]-128)), np.round(cv2.dct(mcu[:,:,1]-128)), np.round(cv2.dct(mcu[:,:,2]-128))), axis=2)
-            return np.dstack((np.round(cv2.dct(mcu[:,:,0])), np.round(cv2.dct(mcu[:,:,1])), np.round(cv2.dct(mcu[:,:,2]))))
-        return np.round(cv2.dct(mcu))
+            return np.dstack((cv2.dct(mcu[:,:,0]), cv2.dct(mcu[:,:,1]), cv2.dct(mcu[:,:,2])))
+        return cv2.dct(mcu)
 
     def idct(self, iquan):
         if self.is_color:
-            return np.dstack((np.round(cv2.idct(iquan[:,:,0])), np.round(cv2.idct(iquan[:,:,1])), np.round(cv2.idct(iquan[:,:,2])))) + 128
+            return np.dstack((cv2.idct(iquan[:,:,0]), cv2.idct(iquan[:,:,1]), cv2.idct(iquan[:,:,2]))) + 128
         return np.round(cv2.idct(iquan)) + 128
     
     def quanti(self, dct, isCrCb=False):
         if self.is_color:
-           return np.dstack((np.round(dct[:,:,0] / self.scaled_qtable_y), np.round(dct[:,:,1] / self.scaled_qtable_c), np.round(dct[:,:,2] / self.scaled_qtable_c)))
+            return np.dstack((np.round(dct[:,:,0] / self.scaled_qtable_y), np.round(dct[:,:,1] / self.scaled_qtable_c), np.round(dct[:,:,2] / self.scaled_qtable_c)))
         if isCrCb:
             return np.round(dct / self.scaled_qtable_c)
         
@@ -75,14 +75,14 @@ class JPEG:
     
     def iquanti(self, quan, isCrCb=False):
         if self.is_color:
-            yy = np.round(quan[0] * self.scaled_qtable_y)
-            cr = np.round(quan[1] * self.scaled_qtable_c)
-            cb = np.round(quan[2] * self.scaled_qtable_c)
+            yy = quan[0] * self.scaled_qtable_y
+            cr = quan[1] * self.scaled_qtable_c
+            cb = quan[2] * self.scaled_qtable_c
             return np.dstack((yy, cr, cb))
         if isCrCb:
-            return np.round(quan * self.scaled_qtable_c)
+            return quan * self.scaled_qtable_c
         
-        return np.round(quan * self.scaled_qtable_y)
+        return quan * self.scaled_qtable_y
     
     def split_16_ycrcb(self, img):
         y0 = img[:8, :8, 0].copy()
@@ -106,12 +106,12 @@ class JPEG:
             scale_factor = 5000 / self.quality_factor
         else:
             scale_factor = 200 - 2 * self.quality_factor
-            
-        scaled_qtable_Y = np.round((self.base_qtable_y * scale_factor + 50) / 1000)
-        scaled_qtable_C = np.round((self.base_qtable_c * scale_factor + 50) / 1000)
         
-        scaled_qtable_Y[np.where(scaled_qtable_Y < 1)] = 1
+        scaled_qtable_Y = np.round((self.base_qtable_y * scale_factor + 50) / 100)
+        scaled_qtable_C = np.round((self.base_qtable_c * scale_factor + 50) / 100)
         
-        scaled_qtable_C[np.where(scaled_qtable_Y < 1)] = 1
+        scaled_qtable_Y[np.where(scaled_qtable_Y <= 1)] = 1
+        scaled_qtable_C[np.where(scaled_qtable_C <= 1)] = 1
+        
         self.scaled_qtable_y = scaled_qtable_Y
         self.scaled_qtable_c = scaled_qtable_C

@@ -7,7 +7,7 @@ import numpy as np
 from torch.utils.data import DataLoader, random_split
 from dataset import DCTDataset
 from model import LIDCT, FCIDCT, FCCNNIDCT, DECNNIDCT, RESIDCT, RESJPEGDECODER
-from tqdm import tqdm 
+from tqdm import tqdm
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 

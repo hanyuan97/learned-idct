@@ -7,7 +7,7 @@ import random
 from preprocess import load_file
 
 class DCTDataset(Dataset):
-    def __init__(self, filename="dataset", ndims=1, q=0, sample="444", rgb_mode=False) -> None:
+    def __init__(self, filename="dataset", ndims=1, q=50, sample="444", rgb_mode=False) -> None:
         super().__init__()
         self.data = load_file("data", filename)
         self.ndims = ndims
@@ -41,7 +41,7 @@ class DCTDataset(Dataset):
                 return x, y
             elif self.sample == "444":
                 if self.q == 0:
-                    x = self.data["x"][index].reshape(64, 1, 1)
+                    x = self.data["x"][index].reshape(192, 1, 1)
                     return x, self.data["y"][index]
                 elif self.q == -1:
                     self.jpeg.setQF(random.randint(1, 10))
