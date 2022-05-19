@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import Dataset
 from utils.jpeg import JPEG
 import random
-from preprocess import load_file
+from preprocess_jpeg import load_file
 
 class DCTDataset(Dataset):
     def __init__(self, filename="dataset", ndims=1, q=50, sample="444", rgb_mode=False) -> None:

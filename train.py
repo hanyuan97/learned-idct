@@ -12,7 +12,7 @@ from tqdm import tqdm
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 def init(args):
-    EPOCH, model_type, dataset, dct_size, train_batch, val_batch, train_ratio, works, ndims, qf, sample = args.epoch, args.model_type, args.dataset, args.dct_size, args.batch, args.val_batch, args.train_ratio, args.works, args.ndims, args.qf, args.sample
+    EPOCH, model_type, dataset, dct_size, train_batch, val_batch, train_ratio, workers, ndims, qf, sample = args.epoch, args.model_type, args.dataset, args.dct_size, args.batch, args.val_batch, args.train_ratio, args.workers, args.ndims, args.qf, args.sample
     dctDataset = DCTDataset(filename=dataset, ndims=ndims, q=qf, sample=sample)
     train_num = int(len(dctDataset) * args.train_ratio)
     val_num = len(dctDataset) - train_num
@@ -21,13 +21,13 @@ def init(args):
     training_loader = DataLoader(dataset=train_set,
                             batch_size=train_batch,
                             shuffle=True,
-                            num_workers=1,
+                            num_workers=workers,
                             pin_memory=True)
 
     validation_loader = DataLoader(dataset=val_set,
                             batch_size=val_batch,
                             shuffle=True,
-                            num_workers=1,
+                            num_workers=workers,
                             pin_memory=True)
 
     
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_filename", type=str, default="model.pth")
     parser.add_argument("-s", "--save", action="store_true")
     parser.add_argument("-n", "--ndims", type=int, default=1)
-    parser.add_argument("-w", "--works", type=int, default=1)
+    parser.add_argument("-w", "--workers", type=int, default=1)
     parser.add_argument("-q", "--qf", type=int, default=0)
     args = parser.parse_args()
     
