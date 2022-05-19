@@ -13,11 +13,11 @@ def preprocess_old(image_paths, size=8, gray=False, max=100, dct=False) -> None:
     C = 1 if gray else 3
     patches = []
     labels = []
-    if gray:
-        img = np.float32(cv2.imread(path, cv2.IMREAD_GRAYSCALE))
-    else:
-        img = np.float32(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2YCR_CB))
     for path in image_paths:
+        if gray:
+            img = np.float32(cv2.imread(path, cv2.IMREAD_GRAYSCALE))
+        else:
+            img = np.float32(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2YCR_CB))
         for i in range(max):
             x = random.randint(0, int(img.shape[1]-size-1))
             y = random.randint(0, int(img.shape[0]-size-1))
@@ -47,17 +47,17 @@ def preprocess(img, x, y, size=8, dct=False) -> None:
     return patch, label
 
 def save_file(x, y, output_path, filename, size, max, gray):
-    xData = np.array(x)
-    yData = np.array(y)
-    np.savez(f"{output_path}/{filename}_{max}_{size}{'' if gray else '_color'}.npz", x=xData, y=yData)    
-    # obj = {'x': x, 'y': y}
-    # with open(output_path+f"/{filename}_{max}_{size}{'' if gray else '_color'}.pickle", "wb") as file:
-    #     pickle.dump(obj, file)
+    # xData = np.array(x)
+    # yData = np.array(y)
+    # np.savez(f"{output_path}/{filename}_{max}_{size}{'' if gray else '_color'}.npz", x=xData, y=yData)    
+    obj = {'x': x, 'y': y}
+    with open(output_path+f"/{filename}_{max}_{size}{'' if gray else '_color'}.pickle", "wb") as file:
+        pickle.dump(obj, file)
 
 def load_file(path, filename):
-    return np.load(f"{path}/{filename}.npz")
-    # with open(path+f"/{filename}.pickle", "rb") as file:
-    #     return pickle.load(file)
+    # return np.load(f"{path}/{filename}.npz")
+    with open(path+f"/{filename}.pickle", "rb") as file:
+        return pickle.load(file)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
