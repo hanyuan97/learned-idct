@@ -66,7 +66,7 @@ if __name__ == "__main__":
     if args.lr:
         test_images = [i for i in os.listdir(data_path) if i.endswith("lr.png")]
     else:
-        test_images = os.listdir(data_path)
+        test_images = sorted(os.listdir(data_path))
     # test_images = ["0848_4x_lr.png", "0850_4x_lr.png", "0869_4x_lr.png", "0900_4x_lr.png"]
     a_res_yuv_mse = []
     a_res_bgr_mse = []
