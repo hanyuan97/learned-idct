@@ -31,7 +31,7 @@ if __name__ == "__main__":
     elif qf == -1:
         q_str = "random"
     weight = args.weight
-    save_path = f"./jpeg_result/djmd_q{q_str}_s{args.sample}c"
+    save_path = f"./jpeg_result/djmd_q{q_str}_s{args.sample}"
     crop_size = 8 if args.sample == "444" else 16
     if not os.path.exists(save_path):
         os.mkdir(save_path)
