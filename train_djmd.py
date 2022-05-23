@@ -31,24 +31,24 @@ def init(args):
                             num_workers=workers,
                             pin_memory=True)
 
-    
-
-    model = RESJPEGDECODER(sample=sample)
-    
-    
     if not os.path.exists("./loss_log"):
         os.mkdir("./loss_log")
     
     if not os.path.exists("./weights"):
         os.mkdir("./weights")
+
+    model = RESJPEGDECODER(sample=sample)
+    if os.path.exists(f"./weights/{args.output_filename}"):
+        model.load_state_dict(torch.load(f"./weights/{args.output_filename}"))    
+    model.to(device)
     
     if qf == 0:
         log_file = open(f"./loss_log/{model_type}_djmd_{args.dataset}.log", "w")
     elif qf > 0:
-        log_file = open(f"./loss_log/{model_type}_djmd_{args.dataset}_{qf}.log", "w")
+        log_file = open(f"./loss_log/{model_type}_djmd_{args.dataset}_{qf}_2.log", "w")
     elif qf == -1:
         log_file = open(f"./loss_log/{model_type}_djmd_{args.dataset}_random_q.log", "w")
-    model.to(device)
+    
     loss_fn = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.00001)
     return model, loss_fn, optimizer, training_loader, validation_loader, log_file
