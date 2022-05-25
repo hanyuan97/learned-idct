@@ -75,7 +75,7 @@ def train_one_epoch(epoch_index):
         data, label = data.to(device, dtype=torch.float), label.to(device, dtype=torch.float)
         optimizer.zero_grad()
         output = model(data)
-        loss = loss_fn(output*1024, label)
+        loss = loss_fn(output, label)
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
@@ -86,7 +86,7 @@ def val_one_epoch(epoch_index):
     for data, label in tqdm(validation_loader):
         data, label = data.to(device, dtype=torch.float), label.to(device, dtype=torch.float)
         output = model(data)
-        loss = loss_fn(output*1024, label)
+        loss = loss_fn(output, label)
         running_loss += loss.item()
     return running_loss
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--epoch", type=int, default=20)
     parser.add_argument("-m", "--model_type", type=str, default="cnn")
     parser.add_argument("-d", "--dataset", type=str, default="dataset")
-    parser.add_argument("-sp", "--sample", type=str, default="444")
+    parser.add_argument("-sp", "--sample", type=str, default="420")
     parser.add_argument("-b", "--batch", type=int, default=64)
     parser.add_argument("-vb", "--val_batch", type=int, default=32)
     parser.add_argument("-ds", "--dct_size", type=int, default=8)
