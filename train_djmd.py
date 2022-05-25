@@ -65,7 +65,9 @@ def train(EPOCH, model, loss_fn, optimizer, training_loader, validation_loader, 
         val_loss = val_loss/len(validation_loader.dataset)
         print(f"Training Loss: {train_loss:.6f} \tValidation Loss: {val_loss:.6f}")
         log_file.write(f"{train_loss:.6f},{val_loss:.6f}\n")
-        if epoch == 40:
+        if epoch == 1:
+            torch.save(model.state_dict(), f"./weights/1_{args.output_filename}")
+        elif epoch == 40:
             torch.save(model.state_dict(), f"./weights/40_{args.output_filename}")
     log_file.close()
     return model
