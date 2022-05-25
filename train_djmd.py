@@ -54,7 +54,7 @@ def init(args):
     return model, loss_fn, optimizer, training_loader, validation_loader, log_file
     
     
-def train(EPOCH, model, loss_fn, optimizer, training_loader, validation_loader, log_file):
+def train(EPOCH, model, loss_fn, optimizer, training_loader, validation_loader, log_file, args):
     for epoch in range(1, EPOCH+1):
         print(f"Epoch: {epoch}/{EPOCH}")
         model.train()
@@ -65,6 +65,8 @@ def train(EPOCH, model, loss_fn, optimizer, training_loader, validation_loader, 
         val_loss = val_loss/len(validation_loader.dataset)
         print(f"Training Loss: {train_loss:.6f} \tValidation Loss: {val_loss:.6f}")
         log_file.write(f"{train_loss:.6f},{val_loss:.6f}\n")
+        if epoch == 40:
+            torch.save(model.state_dict(), f"./weights/40_{args.output_filename}")
     log_file.close()
     return model
     
@@ -109,7 +111,7 @@ if __name__ == "__main__":
     
     model, loss_fn, optimizer, training_loader, validation_loader, log_file = init(args)
     
-    train(args.epoch, model, loss_fn, optimizer, training_loader, validation_loader, log_file)
+    train(args.epoch, model, loss_fn, optimizer, training_loader, validation_loader, log_file, args)
     
     if args.save:
         torch.save(model.state_dict(), f"./weights/{args.output_filename}")
