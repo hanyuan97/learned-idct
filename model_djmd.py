@@ -21,6 +21,7 @@ class RESJPEGDECODER(nn.Module):
             GDN(192)
         )
         self.block8 = nn.Conv2d(192, 6, kernel_size=3, padding=3//2)
+        self.relu = nn.ReLU()
     def forward(self, x):
         cat1 = self.ycrcbblock(x)
         block2 = self.block2(cat1)
@@ -30,7 +31,7 @@ class RESJPEGDECODER(nn.Module):
         block6 = self.block6(block5)
         block7 = self.block7(block6)
         block8 = self.block8(block7 + cat1)
-        return torch.tanh(block8)
+        return self.relu(block8)
 
 class ResidualBlock(nn.Module):
     def __init__(self, channels):
