@@ -43,7 +43,7 @@ if __name__ == "__main__":
     model = RESJPEGDECODER(sample=args.sample)
 
     model.to(device)
-    model.load_state_dict(torch.load(f"./weights/djmd/40_{weight}.pth"))
+    model.load_state_dict(torch.load(f"./weights/djmd/{weight}.pth"))
     with open(f"./weights/djmd/normalize_q{qf}.data", "r") as file:
         arr = file.read().split(",")
         SHIFT_X = float(arr[0])

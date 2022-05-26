@@ -9,10 +9,7 @@ SCALE_Y = 2040
 def get_shift_scale_maxmin(dataset_x):
     SHIFT_VALUE_X = -np.amin(dataset_x)
     SCALE_VALUE_X = np.amax(dataset_x)
-    
-    
     SCALE_VALUE_X += SHIFT_VALUE_X
-    
     
     return SHIFT_VALUE_X, SCALE_VALUE_X
 
