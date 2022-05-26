@@ -23,7 +23,7 @@ class DCTDataset(Dataset):
             self.x.append([self.jpeg.quanti(item, idx>3) for idx, item in enumerate(i)])
             self.y.append(i)
         SHIFT_X, SCALE_X = get_shift_scale_maxmin(self.x)
-        with open(f"./weights/normalize_q{self.q}", "w") as file:
+        with open(f"./weights/normalize_q{self.q}.data", "w") as file:
             file.write(f"{SHIFT_X},{SCALE_X}")
         self.x = shift_and_normalize(np.array(self.x), SHIFT_X, SCALE_X)
         self.y = shift_and_normalize(np.array(self.y), SHIFT_Y, SCALE_Y)

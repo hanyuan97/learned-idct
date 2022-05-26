@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import cv2
 from utils.jpeg import JPEG
 from utils.metrics import cal_ssim, cal_ms_ssim, psnr
+from utils.djmd import *
 import os
 import argparse
 
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     elif qf == -1:
         q_str = "random"
     weight = args.weight
-    save_path = f"./jpeg_result/djmd_q{q_str}_s{args.sample}"
+    save_path = f"./jpeg_result/djmd/djmd_q{q_str}_s{args.sample}"
     crop_size = 8 if args.sample == "444" else 16
     if not os.path.exists(save_path):
         os.mkdir(save_path)
@@ -42,7 +43,12 @@ if __name__ == "__main__":
     model = RESJPEGDECODER(sample=args.sample)
 
     model.to(device)
-    model.load_state_dict(torch.load(f"./weights/{weight}.pth"))
+    model.load_state_dict(torch.load(f"./weights/djmd/40_{weight}.pth"))
+    with open(f"./weights/djmd/normalize_q{qf}.data", "r") as file:
+        arr = file.read().split(",")
+        SHIFT_X = float(arr[0])
+        SCALE_X = float(arr[1])
+        
     model.eval()
     # test_set = load_file("data", filename)
     # print(len(dctDataset))
@@ -77,7 +83,8 @@ if __name__ == "__main__":
                 qua_arr = [jpeg_encoder.quanti(item, idx>3) for idx, item in enumerate(dct_arr)]
                 quan_recon.append(np.array(qua_arr))
 
-        ipt = torch.from_numpy(np.array(quan_recon)[:batch_size]).to(device, dtype=torch.float)
+        quan_recon = shift_and_normalize(np.array(quan_recon), SHIFT_X, SCALE_X)
+        ipt = torch.from_numpy(quan_recon[:batch_size]).to(device, dtype=torch.float)
         opt = model(ipt)
         c=0
         start = 0
@@ -90,7 +97,8 @@ if __name__ == "__main__":
                     start = c//batch_size * batch_size
                     ipt = torch.from_numpy(np.array(quan_recon)[start:start + batch_size]).to(device, dtype=torch.float)
                     opt = model(ipt)
-                qua_arr = (opt[y*img.shape[1]//crop_size+x - start]*1024).cpu().detach().numpy()
+                qua_arr = (opt[y*img.shape[1]//crop_size+x - start]).cpu().detach().numpy()
+                qua_arr = inv_shift_and_normalize(qua_arr, SHIFT_Y, SCALE_Y)
                 iqua_arr = [jpeg_decoder.iquanti(item, idx>3) for idx, item in enumerate(qua_arr)]
                 idct_arr = [jpeg_decoder.idct(i) for i in iqua_arr]
                 res_recon[fix_y:fix_y+crop_size, fix_x:fix_x+crop_size, 1] = cv2.resize(idct_arr[4], (16, 16))

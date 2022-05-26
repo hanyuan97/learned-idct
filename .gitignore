@@ -10,3 +10,4 @@ output/*
 *.log
 *.npz
 *.csv
+*.data
